@@ -15,6 +15,7 @@ cursor = conn.cursor(cursor_factory=RealDictCursor)
 
 def init_db():
     cursor.execute("""
+        CREATE SCHEMA IF NOT EXISTS common_schema;
         CREATE TABLE IF NOT EXISTS common_schema.users (
             telegram_id BIGINT PRIMARY KEY,
             first_name TEXT,
