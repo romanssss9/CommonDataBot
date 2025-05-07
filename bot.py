@@ -5,7 +5,7 @@ import config
 import logging
 
 # Импорт роутеров
-from handlers import start, profile, support
+from handlers import start, profile, support, fallback
 
 async def main():
     bot = Bot(token=config.BOT_TOKEN)
@@ -15,6 +15,7 @@ async def main():
     dp.include_router(start.router)
     dp.include_router(profile.router)
     dp.include_router(support.router)
+    dp.include_router(fallback.router)
 
     print("✅ Бот запущен...")
     await dp.start_polling(bot)

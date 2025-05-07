@@ -16,8 +16,8 @@ main_kb = ReplyKeyboardMarkup(keyboard=[
 
 profile_kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="Добавить email", callback_data="add_email")],
-            [InlineKeyboardButton(text="Добавить телефон", callback_data="add_phone")]
+            [InlineKeyboardButton(text="📧 Добавить email", callback_data="add_email")],
+            [InlineKeyboardButton(text="📱 Добавить телефон", callback_data="add_phone")]
         ]
     )
 
@@ -33,3 +33,8 @@ support_kb = InlineKeyboardMarkup(
         ]
     )
 
+cancel_profile_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🙋‍♂️ В профиль", callback_data="show_profile")]
+        ]
+    )
