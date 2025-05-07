@@ -1,5 +1,4 @@
-import os
-from dotenv import load_dotenv
+from config import BOT_TOKEN, PAYMENT_PROVIDER_TOKEN
 from telegram import (
     Update, InlineKeyboardMarkup, InlineKeyboardButton,
     ReplyKeyboardMarkup, KeyboardButton, LabeledPrice
@@ -15,31 +14,30 @@ from database import (
     update_user_phone, get_user, update_user_subscription
 )
 
-load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-PAYMENT_PROVIDER_TOKEN = os.getenv("PAYMENT_PROVIDER_TOKEN")
-
 EMAIL, PHONE = range(2)
 
 # Главное меню клавиатура
 def get_main_keyboard():
     keyboard = [
-        [KeyboardButton("📋 Меню"), KeyboardButton("💳 Купить подписку")]
+        [KeyboardButton("📋 Меню"),
+         KeyboardButton("💳 Купить подписку")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-
 # Старт
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    init_db()
     user = update.effective_user
     add_or_update_user(user.id, user.first_name, user.username)
     await update.message.reply_text(
         f"Привет, {user.first_name}!\n"
-        "Я бот, который поможет тебе купить подписку на телеграм-канал Common Data.\n"
+        "Я бот, который поможет тебе купить подписку на телеграм канал Common Data.\n"
         "Нажми 📋 Меню, чтобы начать.",
         reply_markup=get_main_keyboard()
     )
 
+async def restart(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    pass
 
 # Меню
 async def menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -134,7 +132,6 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Запуск
 if __name__ == '__main__':
-    init_db()
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Команды

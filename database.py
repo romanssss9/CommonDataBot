@@ -1,64 +1,48 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import config
 
-DB_NAME = "common.db"
+conn = psycopg2.connect(
+    host=config.PG_HOST,
+    port=config.PG_PORT,
+    user=config.PG_USER,
+    password=config.PG_PASSWORD,
+    database=config.PG_DB
+)
+
+conn.autocommit = True
+cursor = conn.cursor(cursor_factory=RealDictCursor)
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            telegram_id INTEGER UNIQUE,
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS common_schema.users (
+            telegram_id BIGINT PRIMARY KEY,
             first_name TEXT,
             username TEXT,
-            email TEXT DEFAULT NULL,
-            phone TEXT DEFAULT NULL,
-            is_subscription INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+            email TEXT,
+            phone TEXT,
+            is_subscription BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+    """)
 
 def add_or_update_user(telegram_id, first_name, username):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT OR IGNORE INTO users (telegram_id, first_name, username)
-        VALUES (?, ?, ?)
-    ''', (telegram_id, first_name, username))
-    conn.commit()
-    conn.close()
+    cursor.execute("""
+        INSERT INTO common_schema.users (telegram_id, first_name, username)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (telegram_id)
+        DO UPDATE SET first_name = EXCLUDED.first_name, username = EXCLUDED.username;
+    """, (telegram_id, first_name, username))
 
 def update_user_email(telegram_id, email):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('UPDATE users SET email = ? WHERE telegram_id = ?', (email, telegram_id))
-    conn.commit()
-    conn.close()
+    cursor.execute("UPDATE common_schema.users SET email=%s WHERE telegram_id=%s", (email, telegram_id))
 
 def update_user_phone(telegram_id, phone):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('UPDATE users SET phone = ? WHERE telegram_id = ?', (phone, telegram_id))
-    conn.commit()
-    conn.close()
+    cursor.execute("UPDATE common_schema.users SET phone=%s WHERE telegram_id=%s", (phone, telegram_id))
+
+def update_user_subscription(telegram_id, status):
+    cursor.execute("UPDATE common_schema.users SET is_subscription=%s WHERE telegram_id=%s", (status, telegram_id))
 
 def get_user(telegram_id):
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users WHERE telegram_id = ?', (telegram_id,))
-    row = cursor.fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-def update_user_subscription(telegram_id, is_active=True):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute(
-        'UPDATE users SET is_subscription = ? WHERE telegram_id = ?',
-        (1 if is_active else 0, telegram_id)
-    )
-    conn.commit()
-    conn.close()
+    cursor.execute("SELECT * FROM common_schema.users WHERE telegram_id=%s", (telegram_id,))
+    return cursor.fetchone()
